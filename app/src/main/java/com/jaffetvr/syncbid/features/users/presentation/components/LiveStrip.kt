@@ -42,7 +42,6 @@ fun LiveStrip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Punto animado de "live"
         Box(
             modifier = Modifier
                 .size(6.dp)

@@ -14,6 +14,9 @@ import com.jaffetvr.syncbid.features.auth.presentation.screens.LoginScreen
 import com.jaffetvr.syncbid.features.auth.presentation.screens.RegisterScreen
 import com.jaffetvr.syncbid.features.users.presentation.screens.AuctionDetailScreen
 import com.jaffetvr.syncbid.features.users.presentation.screens.DashboardScreen
+import com.jaffetvr.syncbid.features.users.presentation.screens.ExploreScreen
+import com.jaffetvr.syncbid.features.users.presentation.screens.FavoritesScreen
+import com.jaffetvr.syncbid.features.users.presentation.screens.ProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -58,6 +61,14 @@ fun AppNavigation() {
                 onNavigateToDetail = { auctionId ->
                     navController.navigate("auction_detail/$auctionId")
                 },
+                onNavigateToRoute = { route ->
+                    if (route != "dashboard") {
+                        navController.navigate(route) {
+                            popUpTo("dashboard") { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 viewModel = hiltViewModel()
             )
         }
@@ -74,6 +85,41 @@ fun AppNavigation() {
             )
         }
 
+        composable("create") {
+            ExploreScreen(
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                viewModel = hiltViewModel()
+            )
+        }
+
+        composable("inventory") {
+            FavoritesScreen(
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                viewModel = hiltViewModel()
+            )
+        }
+
+        composable("config") {
+            ProfileScreen(
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
         // ─── Admin ───────────────────────────────────────────────
         composable("admin_dashboard") {
             AdminDashboardScreen(
@@ -81,7 +127,7 @@ fun AppNavigation() {
                     navController.navigate("create_auction")
                 },
                 onNavigateToInventory = {
-                    navController.navigate("inventory")
+                    navController.navigate("admin_inventory")
                 },
                 viewModel = hiltViewModel()
             )
@@ -95,7 +141,7 @@ fun AppNavigation() {
             )
         }
 
-        composable("inventory") {
+        composable("admin_inventory") {
             InventoryScreen(
                 onBack = { navController.popBackStack() },
                 viewModel = hiltViewModel()
