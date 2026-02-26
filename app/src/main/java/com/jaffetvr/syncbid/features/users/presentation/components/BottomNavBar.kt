@@ -6,10 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,10 +28,10 @@ data class BottomNavItem(
 )
 
 val userBottomNavItems = listOf(
-    BottomNavItem("Inicio", Icons.Outlined.Home, "dashboard"),
-    BottomNavItem("Explorar", Icons.Outlined.Search, "explore"),
-    BottomNavItem("Seguidos", Icons.Outlined.FavoriteBorder, "favorites"),
-    BottomNavItem("Perfil", Icons.Outlined.Person, "profile")
+    BottomNavItem("Panel", Icons.Outlined.Home, "dashboard"),
+    BottomNavItem("Crear", Icons.Outlined.AddBox, "create"),
+    BottomNavItem("Inventario", Icons.Outlined.Inventory2, "inventory"),
+    BottomNavItem("Config", Icons.Outlined.Settings, "config")
 )
 
 @Composable

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun DashboardScreen(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToRoute: (String) -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,7 +46,7 @@ fun DashboardScreen(
             SyncBidBottomNav(
                 items = userBottomNavItems,
                 currentRoute = "dashboard",
-                onItemClick = { /* nav */ }
+                onItemClick = onNavigateToRoute
             )
         }
     ) { padding ->
@@ -107,7 +108,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // ─── Lista de subastas ───
             if (uiState.isLoading && uiState.filteredAuctions.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

@@ -4,10 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaffetvr.syncbid.features.users.domain.entities.Auction
-import com.jaffetvr.syncbid.features.users.domain.entities.AuctionStatus
 import com.jaffetvr.syncbid.features.users.domain.useCases.GetAuctionDetailUseCase
 import com.jaffetvr.syncbid.features.users.domain.useCases.PlaceBidUseCase
+import com.jaffetvr.syncbid.features.users.presentation.components.formatTime
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,7 +25,12 @@ data class AuctionDetailUiState(
     val bidStatus: BidStatus = BidStatus.IDLE,
     val selectedIncrement: Double = 50.0,
     val error: String? = null,
-    val isRolledBack: Boolean = false
+    val isRolledBack: Boolean = false,
+    val displayCurrentPrice: String = "$0",
+    val displayBidAmount: String = "$0",
+    val displayTimeRemaining: String = "00:00",
+    val isTimeCritical: Boolean = false,
+    val bidLabelStatus: String = "Precio"
 )
 
 sealed interface AuctionDetailUiEvent {
@@ -40,7 +46,6 @@ class AuctionDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val auctionId: String = savedStateHandle["auctionId"] ?: ""
-
     private val _uiState = MutableStateFlow(AuctionDetailUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -55,32 +60,38 @@ class AuctionDetailViewModel @Inject constructor(
         viewModelScope.launch {
             getAuctionDetailUseCase(auctionId).collect { auction ->
                 if (auction != null) {
-                    _uiState.update { it.copy(auction = auction, isLoading = false) }
+                    _uiState.update { it.copy(auction = auction, isLoading = false).mapToDisplay() }
                 }
             }
         }
     }
 
     fun onIncrementSelected(amount: Double) {
-        _uiState.update { it.copy(selectedIncrement = amount) }
+        _uiState.update { it.copy(selectedIncrement = amount).mapToDisplay() }
     }
 
-    /**
-     * Puja con actualización optimista + rollback en caso de error.
-     *
-     * 1. Guarda estado previo (para rollback)
-     * 2. Actualiza UI inmediatamente (optimista)
-     * 3. Envía puja al servidor
-     * 4. Si falla → revierte al estado previo + muestra error
-     */
+    private fun AuctionDetailUiState.mapToDisplay(): AuctionDetailUiState {
+        val curr = auction ?: return this
+        val nextBid = curr.currentPrice + selectedIncrement
+
+        return this.copy(
+            displayCurrentPrice = "$${String.format("%,.0f", curr.currentPrice)}",
+            displayBidAmount = "$${String.format("%,.0f", nextBid)}",
+            displayTimeRemaining = formatTime(curr.timeRemainingSeconds),
+            isTimeCritical = curr.timeRemainingSeconds < 30,
+            bidLabelStatus = when (bidStatus) {
+                BidStatus.PROCESSING -> "Enviando…"
+                BidStatus.ERROR -> "↩ Revertido"
+                else -> "Precio"
+            }
+        )
+    }
+
     fun onPlaceBid() {
         val currentAuction = _uiState.value.auction ?: return
         val bidAmount = currentAuction.currentPrice + _uiState.value.selectedIncrement
-
-        // ─── 1. Guardar estado previo para posible rollback ───
         val previousState = _uiState.value
 
-        // ─── 2. Actualización optimista inmediata ───
         _uiState.update { state ->
             state.copy(
                 auction = currentAuction.copy(
@@ -92,42 +103,33 @@ class AuctionDetailViewModel @Inject constructor(
                 bidStatus = BidStatus.PROCESSING,
                 isRolledBack = false,
                 error = null
-            )
+            ).mapToDisplay()
         }
 
-        // ─── 3. Enviar al servidor ───
         viewModelScope.launch {
             placeBidUseCase(auctionId, bidAmount).fold(
-                onSuccess = { bid ->
-                    // ─── Confirmación exitosa ───
-                    _uiState.update { it.copy(bidStatus = BidStatus.SUCCESS) }
-                    _events.emit(AuctionDetailUiEvent.ShowSuccess("Puja confirmada: \$${bid.amount}"))
-
-                    // Resetear estado después de 2s
-                    kotlinx.coroutines.delay(2000)
-                    _uiState.update { it.copy(bidStatus = BidStatus.IDLE) }
+                onSuccess = {
+                    _uiState.update { it.copy(bidStatus = BidStatus.SUCCESS).mapToDisplay() }
+                    _events.emit(AuctionDetailUiEvent.ShowSuccess("Puja confirmada"))
+                    delay(2000)
+                    _uiState.update { it.copy(bidStatus = BidStatus.IDLE).mapToDisplay() }
                 },
                 onFailure = { error ->
-                    // ─── 4. ROLLBACK: Revertir al estado previo ───
                     _uiState.update {
                         previousState.copy(
                             bidStatus = BidStatus.ERROR,
                             isRolledBack = true,
-                            error = "Error de sincronización: ${error.message}"
-                        )
+                            error = error.message
+                        ).mapToDisplay()
                     }
-                    _events.emit(
-                        AuctionDetailUiEvent.ShowError(
-                            "Puja revertida · Conflicto de concurrencia"
-                        )
-                    )
+                    _events.emit(AuctionDetailUiEvent.ShowError("Puja revertida"))
                 }
             )
         }
     }
 
     fun onRetryBid() {
-        _uiState.update { it.copy(bidStatus = BidStatus.IDLE, isRolledBack = false, error = null) }
+        _uiState.update { it.copy(bidStatus = BidStatus.IDLE, isRolledBack = false).mapToDisplay() }
         onPlaceBid()
     }
 }

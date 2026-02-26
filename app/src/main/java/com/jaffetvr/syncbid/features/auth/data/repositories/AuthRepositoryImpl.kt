@@ -14,7 +14,17 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             delay(1500)
 
-            if (email == "prueba@gmail.com" && password == "12345678") {
+            if (email == "admin@gmail.com" && password == "12345678") {
+                Result.success(
+                    User(
+                        id = "0",
+                        fullName = "Administrador",
+                        email = "admin@gmail.com",
+                        token = "mock_token_admin",
+                        role = "ADMIN"
+                    )
+                )
+            } else if (email == "prueba@gmail.com" && password == "12345678") {
                 Result.success(
                     User(
                         id = "1",
