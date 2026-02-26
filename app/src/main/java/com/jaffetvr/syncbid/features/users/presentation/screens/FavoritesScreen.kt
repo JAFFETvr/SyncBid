@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,14 +23,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaffetvr.syncbid.core.ui.theme.*
 import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryItem
 import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryStatus
-import com.jaffetvr.syncbid.features.admin.presentation.viewModels.InventoryViewModel
 import com.jaffetvr.syncbid.features.users.presentation.components.SyncBidBottomNav
 import com.jaffetvr.syncbid.features.users.presentation.components.userBottomNavItems
+import com.jaffetvr.syncbid.features.users.presentation.viewModels.FavoritesViewModel
 
 @Composable
 fun FavoritesScreen(
     onNavigateToRoute: (String) -> Unit,
-    viewModel: InventoryViewModel = hiltViewModel()
+    viewModel: FavoritesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = SnackbarHostState()
@@ -40,16 +39,6 @@ fun FavoritesScreen(
         viewModel.errors.collect { msg ->
             snackbarHostState.showSnackbar(msg)
         }
-    }
-
-    val statusFilters: List<Pair<InventoryStatus?, String>> = buildList {
-        add(null to "Todas")
-        val activeCount = uiState.items.count { it.status == InventoryStatus.ACTIVE }
-        val pendingCount = uiState.items.count { it.status == InventoryStatus.PENDING }
-        val endedCount = uiState.items.count { it.status == InventoryStatus.ENDED }
-        add(InventoryStatus.ACTIVE to "Activa ($activeCount)")
-        add(InventoryStatus.PENDING to "Pendiente ($pendingCount)")
-        if (endedCount > 0) add(InventoryStatus.ENDED to "Finalizada ($endedCount)")
     }
 
     Scaffold(
@@ -90,7 +79,7 @@ fun FavoritesScreen(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "${uiState.items.size} ITEMS",
+                        text = uiState.itemCountLabel,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Gold,
@@ -105,8 +94,8 @@ fun FavoritesScreen(
                 contentPadding = PaddingValues(horizontal = 18.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(statusFilters) { (status, label) ->
-                    val selected = uiState.selectedStatus == status
+                items(uiState.statusFilters) { filter ->
+                    val selected = uiState.selectedStatus == filter.status
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -118,11 +107,11 @@ fun FavoritesScreen(
                                     RoundedCornerShape(20.dp)
                                 ) else Modifier
                             )
-                            .clickable { viewModel.filterByStatus(status) }
+                            .clickable { viewModel.filterByStatus(filter.status) }
                             .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
                         Text(
-                            text = label,
+                            text = filter.label,
                             color = if (selected) Gold else White50,
                             fontSize = 12.sp,
                             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
