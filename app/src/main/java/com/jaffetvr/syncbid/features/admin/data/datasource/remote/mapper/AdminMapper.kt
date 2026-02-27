@@ -10,23 +10,40 @@ import com.jaffetvr.syncbid.features.admin.domain.entities.AdminStats
 import com.jaffetvr.syncbid.features.admin.domain.entities.CreatedAuction
 import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryItem
 import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryStatus
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+// Función auxiliar para convertir la fecha del servidor en segundos
+private fun isoToSecondsRemaining(isoString: String?): Long {
+    if (isoString.isNullOrBlank()) return 0L
+    return try {
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        val endTime = LocalDateTime.parse(isoString, formatter)
+        val now = LocalDateTime.now()
+        val seconds = java.time.Duration.between(now, endTime).seconds
+        if (seconds < 0) 0L else seconds
+    } catch (e: Exception) {
+        0L
+    }
+}
 
 fun CreateAuctionResponseDto.toDomain(): CreatedAuction = CreatedAuction(
-    id = id.toString(),  // Soluciona el error: convierte el Long de la API a String para la App
-    name = title,        // Tu API envía "title", pero la entidad de tu App usa "name"
+    id = id.toString(),
+    name = title,
     status = status,
-    createdAt = ""       // Tu API no devuelve "createdAt" en la respuesta de creación, enviamos vacío
+    createdAt = ""
 )
 
+// CORRECCIÓN: Adaptar los campos del nuevo DTO al dominio visual
 fun InventoryItemDto.toDomain(): InventoryItem = InventoryItem(
-    id = id,
-    name = name,
-    basePrice = basePrice,
+    id = id.toString(),
+    name = title, // backend envía title, usamos name en App
+    basePrice = currentPrice ?: 0.0, // backend no manda basePrice por separado en esta lista
     currentPrice = currentPrice,
-    bidCount = bidCount,
+    bidCount = bidCount ?: 0,
     status = InventoryStatus.fromString(status),
-    timeRemainingSeconds = timeRemainingSeconds,
-    scheduledAt = scheduledAt
+    timeRemainingSeconds = isoToSecondsRemaining(endTime),
+    scheduledAt = endTime
 )
 
 fun AdminStatsDto.toDomain(): AdminStats = AdminStats(

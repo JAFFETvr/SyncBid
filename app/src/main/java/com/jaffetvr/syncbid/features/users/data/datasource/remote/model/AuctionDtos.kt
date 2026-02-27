@@ -30,7 +30,8 @@ data class AuctionDto(
     @SerializedName("currentPrice") val currentPrice: Double,
     @SerializedName("endTime") val endTime: String,       // ISO-8601: "2025-12-31T23:59:59"
     @SerializedName("status") val status: String,          // "ACTIVE", "FINISHED", "CANCELLED"
-    @SerializedName("winnerUsername") val winnerUsername: String?
+    @SerializedName("winnerUsername") val winnerUsername: String?,
+    @SerializedName("bidCount") val bidCount: Int?
 )
 
 /**

@@ -19,12 +19,12 @@ data class CreateAuctionUiState(
     val name: String = "",
     val description: String = "",
     val basePrice: String = "",
-    val durationHours: Int = 24, // Se mantiene para calcular el endTime en la API
+    val durationHours: Int = 24,
     val isLoading: Boolean = false,
     val isNameValid: Boolean = true,
     val isDescValid: Boolean = true,
     val isPriceValid: Boolean = true,
-    val imageUri: Uri? = null // Almacena la imagen seleccionada
+    val imageUri: Uri? = null
 )
 
 sealed interface CreateAuctionEvent {
@@ -85,13 +85,13 @@ class CreateAuctionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
+            // CORRECCIÓN: Se eliminó el parámetro 'category' que ya no existe en el UseCase
             createAuctionUseCase(
                 name = state.name,
                 description = state.description,
                 basePrice = state.basePrice.toDouble(),
                 durationHours = state.durationHours,
-                category = "Otros", // Se envía un valor por defecto si el caso de uso aún lo pide
-                imageUri = state.imageUri // Se pasa la imagen correctamente
+                imageUri = state.imageUri
             ).fold(
                 onSuccess = {
                     _uiState.update { CreateAuctionUiState() }
