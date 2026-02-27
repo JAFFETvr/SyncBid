@@ -1,5 +1,9 @@
 package com.jaffetvr.syncbid.features.admin.presentation.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,6 +71,14 @@ fun CreateAuctionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.onImageChange(uri)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -114,7 +127,32 @@ fun CreateAuctionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Name
+            // Área de Imagen
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Black3)
+                    .border(1.dp, if (uiState.imageUri != null) Gold else GoldBorder, RoundedCornerShape(12.dp))
+                    .clickable {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (uiState.imageUri != null) {
+                    Text(text = "Imagen seleccionada ✓", color = Gold, fontSize = 16.sp)
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "+", color = Gold, fontSize = 32.sp)
+                        Text(text = "Añadir imagen", color = White70, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            // Nombre / Título
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
@@ -126,7 +164,7 @@ fun CreateAuctionScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Description
+            // Descripción
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = viewModel::onDescriptionChange,
@@ -139,11 +177,11 @@ fun CreateAuctionScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Base price
+            // Precio
             OutlinedTextField(
                 value = uiState.basePrice,
                 onValueChange = viewModel::onBasePriceChange,
-                label = { Text("Precio base (USD)") },
+                label = { Text("Precio inicial (USD)") },
                 isError = !uiState.isPriceValid,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -152,37 +190,8 @@ fun CreateAuctionScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Category chips
-            Text("Categoría", color = White70, fontSize = 13.sp)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                viewModel.categoryOptions.forEach { cat ->
-                    val selected = uiState.category == cat
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (selected) GoldSubtle else Black3)
-                            .border(
-                                1.dp,
-                                if (selected) Gold else GoldBorder,
-                                RoundedCornerShape(20.dp)
-                            )
-                            .clickable { viewModel.onCategoryChange(cat) }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = cat,
-                            color = if (selected) Gold else White70,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
-
-            // Duration chips
-            Text("Duración", color = White70, fontSize = 13.sp)
+            // Duración
+            Text("Duración de la subasta", color = White70, fontSize = 13.sp)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -194,26 +203,18 @@ fun CreateAuctionScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(if (selected) GoldSubtle else Black3)
-                            .border(
-                                1.dp,
-                                if (selected) Gold else GoldBorder,
-                                RoundedCornerShape(20.dp)
-                            )
+                            .border(1.dp, if (selected) Gold else GoldBorder, RoundedCornerShape(20.dp))
                             .clickable { viewModel.onDurationChange(hours) }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
-                        Text(
-                            text = label,
-                            color = if (selected) Gold else White70,
-                            fontSize = 12.sp
-                        )
+                        Text(text = label, color = if (selected) Gold else White70, fontSize = 12.sp)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Submit
+            // Botón Publicar
             Button(
                 onClick = viewModel::submit,
                 enabled = !uiState.isLoading,
@@ -223,22 +224,14 @@ fun CreateAuctionScreen(
                     disabledContainerColor = Gold.copy(alpha = 0.4f)
                 ),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        color = Black,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.padding(4.dp)
-                    )
+                    CircularProgressIndicator(color = Black, strokeWidth = 2.dp, modifier = Modifier.padding(4.dp))
                 } else {
                     Text("Publicar Subasta", fontSize = 15.sp)
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

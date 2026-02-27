@@ -2,19 +2,27 @@ package com.jaffetvr.syncbid.features.admin.data.datasource.remote.model
 
 import com.google.gson.annotations.SerializedName
 
-data class CreateAuctionRequestDto(
-    @SerializedName("name") val name: String,
-    @SerializedName("description") val description: String,
-    @SerializedName("basePrice") val basePrice: Double,
-    @SerializedName("durationHours") val durationHours: Int,
-    @SerializedName("category") val category: String
+// 1. Añadimos esta clase para mapear el "ApiResponse" de tu Spring Boot
+data class ApiResponseDto<T>(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: T?
 )
 
+// 2. Coincide exactamente con AuctionCreateRequest.java del backend
+data class CreateAuctionRequestDto(
+    @SerializedName("title") val title: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("startingPrice") val startingPrice: Double,
+    @SerializedName("endTime") val endTime: String // Formato ISO-8601 ej: "2026-03-01T15:30:00"
+)
+
+// 3. Coincide con AuctionResponse.java del backend (lo esencial)
 data class CreateAuctionResponseDto(
-    @SerializedName("id") val id: String,
-    @SerializedName("name") val name: String,
-    @SerializedName("status") val status: String,
-    @SerializedName("createdAt") val createdAt: String
+    @SerializedName("id") val id: Long, // Usualmente en Spring Boot los IDs son Long
+    @SerializedName("title") val title: String,
+    @SerializedName("status") val status: String
+    // Puedes agregar más campos de AuctionResponse si los necesitas mostrar
 )
 
 data class InventoryItemDto(
