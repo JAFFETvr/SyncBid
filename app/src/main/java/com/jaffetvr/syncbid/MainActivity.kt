@@ -4,9 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.navigation.compose.rememberNavController
 import com.jaffetvr.syncbid.core.ui.theme.SyncBidTheme
-import com.jaffetvr.syncbid.navigation.SyncBidNavGraph
+import com.jaffetvr.syncbid.core.navigation.AppNavigation
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -16,8 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SyncBidTheme {
-                val navController = rememberNavController()
-                SyncBidNavGraph(navController = navController)
+                AppNavigation()
             }
         }
     }
