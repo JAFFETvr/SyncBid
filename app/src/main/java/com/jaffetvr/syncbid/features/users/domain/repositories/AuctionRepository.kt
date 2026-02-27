@@ -22,6 +22,9 @@ interface AuctionRepository {
     /** Envía una puja al servidor. */
     suspend fun placeBid(auctionId: String, amount: Double): Result<Bid>
 
-    /** Inicia la conexión WebSocket para actualizaciones en tiempo real. */
+    /** Inicia la conexión WebSocket para actualizaciones en tiempo real (general). */
     fun startRealTimeUpdates(): Flow<Unit>
+
+    /** Inicia la conexión WebSocket para una subasta específica. */
+    fun startRealTimeUpdatesForAuction(auctionId: String): Flow<Unit>
 }
