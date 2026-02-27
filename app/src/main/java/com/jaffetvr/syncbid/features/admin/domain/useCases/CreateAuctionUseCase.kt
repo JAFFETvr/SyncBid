@@ -1,5 +1,6 @@
 package com.jaffetvr.syncbid.features.admin.domain.useCases
 
+import android.net.Uri
 import com.jaffetvr.syncbid.features.admin.domain.entities.CreatedAuction
 import com.jaffetvr.syncbid.features.admin.domain.repositories.AdminRepository
 import javax.inject.Inject
@@ -12,7 +13,8 @@ class CreateAuctionUseCase @Inject constructor(
         description: String,
         basePrice: Double,
         durationHours: Int,
-        category: String
+        category: String,
+        imageUri: Uri? // Recibe el Uri desde el ViewModel
     ): Result<CreatedAuction> =
-        repository.createAuction(name, description, basePrice, durationHours, category)
+        repository.createAuction(name, description, basePrice, durationHours, category, imageUri)
 }
