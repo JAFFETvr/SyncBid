@@ -7,40 +7,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,16 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jaffetvr.syncbid.core.ui.theme.Black
-import com.jaffetvr.syncbid.core.ui.theme.Black2
-import com.jaffetvr.syncbid.core.ui.theme.Black3
-import com.jaffetvr.syncbid.core.ui.theme.Gold
-import com.jaffetvr.syncbid.core.ui.theme.GoldBorder
-import com.jaffetvr.syncbid.core.ui.theme.GoldSubtle
-import com.jaffetvr.syncbid.core.ui.theme.RedLight
-import com.jaffetvr.syncbid.core.ui.theme.White50
-import com.jaffetvr.syncbid.core.ui.theme.White70
-import com.jaffetvr.syncbid.core.ui.theme.White90
+import com.jaffetvr.syncbid.core.ui.theme.*
 import com.jaffetvr.syncbid.features.admin.presentation.viewModels.CreateAuctionEvent
 import com.jaffetvr.syncbid.features.admin.presentation.viewModels.CreateAuctionViewModel
 
@@ -75,9 +41,7 @@ fun CreateAuctionScreen(
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        if (uri != null) {
-            viewModel.onImageChange(uri)
-        }
+        if (uri != null) viewModel.onImageChange(uri)
     }
 
     LaunchedEffect(Unit) {
@@ -108,11 +72,7 @@ fun CreateAuctionScreen(
                 title = { Text("Nueva Subasta", color = White90, fontSize = 17.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Gold
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Gold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Black2)
@@ -127,7 +87,7 @@ fun CreateAuctionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Área de Imagen
+            // Imagen
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -136,23 +96,21 @@ fun CreateAuctionScreen(
                     .background(Black3)
                     .border(1.dp, if (uiState.imageUri != null) Gold else GoldBorder, RoundedCornerShape(12.dp))
                     .clickable {
-                        photoPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                        photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                 contentAlignment = Alignment.Center
             ) {
                 if (uiState.imageUri != null) {
-                    Text(text = "Imagen seleccionada ✓", color = Gold, fontSize = 16.sp)
+                    Text("Imagen seleccionada ✓", color = Gold, fontSize = 16.sp)
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "+", color = Gold, fontSize = 32.sp)
-                        Text(text = "Añadir imagen", color = White70, fontSize = 14.sp)
+                        Text("+", color = Gold, fontSize = 32.sp)
+                        Text("Añadir imagen", color = White70, fontSize = 14.sp)
                     }
                 }
             }
 
-            // Nombre / Título
+            // Nombre
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
@@ -190,7 +148,7 @@ fun CreateAuctionScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Duración
+            // Duración (Chips)
             Text("Duración de la subasta", color = White70, fontSize = 13.sp)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -207,27 +165,22 @@ fun CreateAuctionScreen(
                             .clickable { viewModel.onDurationChange(hours) }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
-                        Text(text = label, color = if (selected) Gold else White70, fontSize = 12.sp)
+                        Text(label, color = if (selected) Gold else White70, fontSize = 12.sp)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón Publicar
             Button(
                 onClick = viewModel::submit,
                 enabled = !uiState.isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Gold,
-                    contentColor = Black,
-                    disabledContainerColor = Gold.copy(alpha = 0.4f)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Black),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(color = Black, strokeWidth = 2.dp, modifier = Modifier.padding(4.dp))
+                    CircularProgressIndicator(color = Black, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                 } else {
                     Text("Publicar Subasta", fontSize = 15.sp)
                 }

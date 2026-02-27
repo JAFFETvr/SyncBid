@@ -13,8 +13,13 @@ class CreateAuctionUseCase @Inject constructor(
         description: String,
         basePrice: Double,
         durationHours: Int,
-        category: String,
-        imageUri: Uri? // Recibe el Uri desde el ViewModel
+        imageUri: Uri? // Parámetros sincronizados con el repositorio
     ): Result<CreatedAuction> =
-        repository.createAuction(name, description, basePrice, durationHours, category, imageUri)
+        repository.createAuction(
+            name = name,
+            description = description,
+            basePrice = basePrice,
+            durationHours = durationHours,
+            imageUri = imageUri
+        )
 }

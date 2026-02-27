@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 class AdminRepositoryImpl @Inject constructor(
     private val adminApi: AdminApi,
-    @ApplicationContext private val context: Context // Necesario para procesar el Uri
+    @ApplicationContext private val context: Context
 ) : AdminRepository {
 
     override suspend fun createAuction(
@@ -32,11 +32,12 @@ class AdminRepositoryImpl @Inject constructor(
         description: String,
         basePrice: Double,
         durationHours: Int,
-        category: String,
-        imageUri: Uri?
+        imageUri: Uri? // Se eliminó 'category'
     ): Result<CreatedAuction> = try {
-        // 1. Preparamos el DTO con los nombres de campos de la API
+        // 1. Calculamos endTime basándonos en la duración seleccionada
         val endTimeIso = LocalDateTime.now().plusHours(durationHours.toLong()).toString()
+
+        // 2. DTO con los 4 campos exactos de tu AuctionCreateRequest.java
         val requestDto = CreateAuctionRequestDto(
             title = name,
             description = description,
@@ -44,14 +45,14 @@ class AdminRepositoryImpl @Inject constructor(
             endTime = endTimeIso
         )
 
-        // 2. PASO 1: Crear la subasta (JSON)
+        // 3. Crear subasta (Paso 1)
         val response = adminApi.createAuction(requestDto)
         val apiResponse = response.body()
 
         if (response.isSuccessful && apiResponse?.data != null) {
             val createdAuction = apiResponse.data.toDomain()
 
-            // 3. PASO 2: Si hay imagen, subirla usando el ID recién creado
+            // 4. Subir imagen si existe (Paso 2)
             if (imageUri != null) {
                 uploadImage(apiResponse.data.id, imageUri)
             }
@@ -66,8 +67,9 @@ class AdminRepositoryImpl @Inject constructor(
 
     override suspend fun getInventory(): Result<List<InventoryItem>> = try {
         val response = adminApi.getInventory()
-        // Accedemos a .data porque la API envuelve la lista en ApiResponse
         val apiResponse = response.body()
+
+        // Accedemos a apiResponse.data porque tu API envuelve todo en ApiResponse.java
         if (response.isSuccessful && apiResponse?.data != null) {
             Result.success(apiResponse.data.map { it.toDomain() })
         } else {
@@ -89,16 +91,14 @@ class AdminRepositoryImpl @Inject constructor(
         Result.failure(e)
     }
 
-    // --- Funciones auxiliares para el manejo de la imagen ---
-
     private suspend fun uploadImage(auctionId: Long, uri: Uri) {
         val file = uriToFile(uri) ?: return
         val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-        // El nombre "file" debe coincidir con @RequestParam("file") de tu Controller
+        // "file" coincide con @RequestParam("file") en tu AuctionController.java
         val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
         adminApi.uploadAuctionImage(auctionId, body)
-        file.delete() // Borrar archivo temporal
+        file.delete()
     }
 
     private fun uriToFile(uri: Uri): File? {
