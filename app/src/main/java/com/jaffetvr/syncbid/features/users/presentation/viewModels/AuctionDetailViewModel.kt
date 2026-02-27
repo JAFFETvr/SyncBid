@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaffetvr.syncbid.features.users.domain.entities.Auction
+import com.jaffetvr.syncbid.features.users.domain.repositories.AuctionRepository
 import com.jaffetvr.syncbid.features.users.domain.useCases.GetAuctionDetailUseCase
 import com.jaffetvr.syncbid.features.users.domain.useCases.PlaceBidUseCase
 import com.jaffetvr.syncbid.features.users.presentation.components.formatTime
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +32,8 @@ data class AuctionDetailUiState(
     val displayBidAmount: String = "$0",
     val displayTimeRemaining: String = "00:00",
     val isTimeCritical: Boolean = false,
-    val bidLabelStatus: String = "Precio"
+    val bidLabelStatus: String = "Precio",
+    val isWebSocketConnected: Boolean = false
 )
 
 sealed interface AuctionDetailUiEvent {
@@ -42,6 +45,7 @@ sealed interface AuctionDetailUiEvent {
 class AuctionDetailViewModel @Inject constructor(
     private val getAuctionDetailUseCase: GetAuctionDetailUseCase,
     private val placeBidUseCase: PlaceBidUseCase,
+    private val auctionRepository: AuctionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -54,6 +58,7 @@ class AuctionDetailViewModel @Inject constructor(
 
     init {
         observeAuction()
+        connectWebSocket()
     }
 
     private fun observeAuction() {
@@ -63,6 +68,24 @@ class AuctionDetailViewModel @Inject constructor(
                     _uiState.update { it.copy(auction = auction, isLoading = false).mapToDisplay() }
                 }
             }
+        }
+    }
+
+    /**
+     * Conecta el WebSocket para recibir pujas en tiempo real.
+     * Cuando otro usuario puja, el WebSocket actualiza Room,
+     * y Room emite el cambio que observeAuction() recoge automáticamente.
+     * Al salir de la pantalla, viewModelScope se cancela y el WebSocket se cierra.
+     */
+    private fun connectWebSocket() {
+        viewModelScope.launch {
+            auctionRepository.startRealTimeUpdatesForAuction(auctionId)
+                .catch { e ->
+                    _uiState.update { it.copy(isWebSocketConnected = false) }
+                }
+                .collect {
+                    _uiState.update { it.copy(isWebSocketConnected = true) }
+                }
         }
     }
 
@@ -89,6 +112,8 @@ class AuctionDetailViewModel @Inject constructor(
 
     fun onPlaceBid() {
         val currentAuction = _uiState.value.auction ?: return
+        if (_uiState.value.bidStatus == BidStatus.PROCESSING) return // Evitar doble puja
+
         val bidAmount = currentAuction.currentPrice + _uiState.value.selectedIncrement
         val previousState = _uiState.value
 

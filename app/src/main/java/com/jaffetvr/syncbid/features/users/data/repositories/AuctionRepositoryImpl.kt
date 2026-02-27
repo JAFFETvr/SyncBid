@@ -61,14 +61,13 @@ class AuctionRepositoryImpl @Inject constructor(
                 if (body?.success == true && body.data != null) {
                     val bidDto = body.data
 
-                    // CORRECCIÓN 1: Obtenemos la subasta actual y le sumamos 1 a las pujas
                     val currentAuction = auctionDao.getAuctionByIdSync(auctionId)
                     val newBidCount = (currentAuction?.bidCount ?: 0) + 1
 
                     auctionDao.updateBidInfo(
                         auctionId = auctionId,
                         price = bidDto.amount,
-                        bidCount = newBidCount, // ← AHORA SE ACTUALIZA CORRECTAMENTE
+                        bidCount = newBidCount,
                         leaderId = bidDto.bidderUsername,
                         leaderName = bidDto.bidderUsername,
                         isUserWinning = true
@@ -86,21 +85,19 @@ class AuctionRepositoryImpl @Inject constructor(
 
     override fun startRealTimeUpdates(): Flow<Unit> = flow { }
 
-    fun startRealTimeUpdatesForAuction(auctionId: String): Flow<Unit> = flow {
+    override fun startRealTimeUpdatesForAuction(auctionId: String): Flow<Unit> = flow {
         webSocketDataSource.observeAuction(auctionId).collect { update ->
             when (update.type) {
                 "NEW_BID" -> {
                     val bidData = update.data as? BidUpdateData
                     if (bidData?.amount != null) {
-
-                        // CORRECCIÓN 2: Incrementamos el contador cuando llega una puja externa vía WebSocket
                         val currentAuction = auctionDao.getAuctionByIdSync(auctionId)
                         val newBidCount = (currentAuction?.bidCount ?: 0) + 1
 
                         auctionDao.updateBidInfo(
                             auctionId = auctionId,
                             price = bidData.amount,
-                            bidCount = newBidCount, // ← AHORA SE ACTUALIZA CORRECTAMENTE
+                            bidCount = newBidCount,
                             leaderId = bidData.bidderUsername,
                             leaderName = bidData.bidderUsername,
                             isUserWinning = false
@@ -109,7 +106,6 @@ class AuctionRepositoryImpl @Inject constructor(
                 }
                 "AUCTION_FINISHED" -> {
                     val winner = update.data as? String
-                    // CORRECCIÓN 3: Usamos el nuevo método para no borrar el precio final
                     auctionDao.markAuctionAsFinished(
                         auctionId = auctionId,
                         winner = winner
