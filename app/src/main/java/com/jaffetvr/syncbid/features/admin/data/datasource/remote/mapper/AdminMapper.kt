@@ -12,10 +12,10 @@ import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryItem
 import com.jaffetvr.syncbid.features.admin.domain.entities.InventoryStatus
 
 fun CreateAuctionResponseDto.toDomain(): CreatedAuction = CreatedAuction(
-    id = id,
-    name = name,
+    id = id.toString(),  // Soluciona el error: convierte el Long de la API a String para la App
+    name = title,        // Tu API envía "title", pero la entidad de tu App usa "name"
     status = status,
-    createdAt = createdAt
+    createdAt = ""       // Tu API no devuelve "createdAt" en la respuesta de creación, enviamos vacío
 )
 
 fun InventoryItemDto.toDomain(): InventoryItem = InventoryItem(

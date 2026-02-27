@@ -1,5 +1,6 @@
 package com.jaffetvr.syncbid.features.admin.presentation.viewModels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaffetvr.syncbid.features.admin.domain.useCases.CreateAuctionUseCase
@@ -18,12 +19,12 @@ data class CreateAuctionUiState(
     val name: String = "",
     val description: String = "",
     val basePrice: String = "",
-    val category: String = "",
-    val durationHours: Int = 24,
+    val durationHours: Int = 24, // Se mantiene para calcular el endTime en la API
     val isLoading: Boolean = false,
     val isNameValid: Boolean = true,
     val isDescValid: Boolean = true,
-    val isPriceValid: Boolean = true
+    val isPriceValid: Boolean = true,
+    val imageUri: Uri? = null // Almacena la imagen seleccionada
 )
 
 sealed interface CreateAuctionEvent {
@@ -44,11 +45,6 @@ class CreateAuctionViewModel @Inject constructor(
 
     val durationOptions = listOf(1, 6, 12, 24, 48, 72)
 
-    val categoryOptions = listOf(
-        "Electrónica", "Vehículos", "Arte", "Joyería",
-        "Coleccionables", "Inmuebles", "Deportes", "Otros"
-    )
-
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value, isNameValid = true) }
     }
@@ -61,12 +57,12 @@ class CreateAuctionViewModel @Inject constructor(
         _uiState.update { it.copy(basePrice = value, isPriceValid = true) }
     }
 
-    fun onCategoryChange(value: String) {
-        _uiState.update { it.copy(category = value) }
-    }
-
     fun onDurationChange(hours: Int) {
         _uiState.update { it.copy(durationHours = hours) }
+    }
+
+    fun onImageChange(uri: Uri) {
+        _uiState.update { it.copy(imageUri = uri) }
     }
 
     fun submit() {
@@ -94,7 +90,8 @@ class CreateAuctionViewModel @Inject constructor(
                 description = state.description,
                 basePrice = state.basePrice.toDouble(),
                 durationHours = state.durationHours,
-                category = state.category.ifBlank { "Otros" }
+                category = "Otros", // Se envía un valor por defecto si el caso de uso aún lo pide
+                imageUri = state.imageUri // Se pasa la imagen correctamente
             ).fold(
                 onSuccess = {
                     _uiState.update { CreateAuctionUiState() }
