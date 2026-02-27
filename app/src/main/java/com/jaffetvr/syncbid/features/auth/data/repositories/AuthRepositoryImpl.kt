@@ -14,10 +14,6 @@ class AuthRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager
 ) : AuthRepository {
 
-    /**
-     * Login real contra el servidor.
-     * El servidor devuelve ApiResponse<String> donde data = JWT token.
-     */
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
             val response = authApi.login(LoginRequestDto(email, password))
@@ -26,15 +22,19 @@ class AuthRepositoryImpl @Inject constructor(
                 val token = response.body()!!.data
                     ?: return Result.failure(Exception("Token no recibido"))
 
-                // Guardamos el JWT para que AuthInterceptor lo use en futuras peticiones
                 tokenManager.saveToken(token)
 
-                // Construimos el User del dominio con los datos disponibles
-                // (el login solo devuelve el token, no el perfil completo)
+                // El login solo devuelve el token, así que usamos la parte antes del @
+                // como username temporal. Si ya había uno guardado (del registro), se respeta.
+                val username = email.substringBefore("@")
+                if (tokenManager.getUsername() == null) {
+                    tokenManager.saveUsername(username)
+                }
+
                 Result.success(
                     User(
                         id = "",
-                        fullName = email.substringBefore("@"),
+                        fullName = tokenManager.getUsername() ?: username,
                         email = email,
                         token = token,
                         role = "USER"
@@ -51,11 +51,6 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Registro real contra el servidor.
-     * El servidor devuelve ApiResponse<UserResponseDto>.
-     * Después del registro, hacemos login automático para obtener el token.
-     */
     override suspend fun register(
         fullName: String,
         email: String,
@@ -64,7 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.register(
                 RegisterRequestDto(
-                    username = fullName,  // el servidor espera "username"
+                    username = fullName,
                     email = email,
                     password = password
                 )
@@ -74,13 +69,14 @@ class AuthRepositoryImpl @Inject constructor(
                 val userDto = response.body()!!.data
                     ?: return Result.failure(Exception("Datos de usuario no recibidos"))
 
-                // Auto-login después del registro para obtener el JWT
+                // Guardamos el username real que devuelve el servidor ANTES del auto-login
+                tokenManager.saveUsername(userDto.username)
+
                 val loginResult = login(email, password)
                 if (loginResult.isSuccess) {
                     val token = tokenManager.getToken() ?: ""
                     Result.success(userDto.toDomain(token))
                 } else {
-                    // Registro exitoso pero login falló — devolvemos el usuario sin token
                     Result.success(userDto.toDomain())
                 }
             } else {
