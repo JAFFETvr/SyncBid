@@ -16,6 +16,10 @@ interface AuctionDao {
     @Query("SELECT * FROM auctions WHERE id = :id")
     fun observeAuctionById(id: String): Flow<AuctionEntity?>
 
+    // NUEVO: Permite consultar la subasta de forma directa (síncrona) para hacer cálculos
+    @Query("SELECT * FROM auctions WHERE id = :id")
+    suspend fun getAuctionByIdSync(id: String): AuctionEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(auctions: List<AuctionEntity>)
 
@@ -30,6 +34,14 @@ interface AuctionDao {
         leaderId: String?,
         leaderName: String?,
         isUserWinning: Boolean
+    )
+
+    // NUEVO: Método específico para cuando termina la subasta (así no sobrescribe el precio final ni las pujas con 0)
+    @Query("UPDATE auctions SET status = :status, leaderId = :winner, leaderName = :winner WHERE id = :auctionId")
+    suspend fun markAuctionAsFinished(
+        auctionId: String,
+        status: String = "ENDED",
+        winner: String?
     )
 
     @Query("DELETE FROM auctions")

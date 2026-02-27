@@ -1,6 +1,6 @@
 package com.jaffetvr.syncbid.features.admin.data.datasource.remote.api
 
-import com.jaffetvr.syncbid.features.admin.data.datasource.remote.model.* // Asegúrate de importar los DTOs y ApiResponseDto
+import com.jaffetvr.syncbid.features.admin.data.datasource.remote.model.*
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -10,7 +10,7 @@ interface AdminApi {
     @POST("api/v1/auctions")
     suspend fun createAuction(
         @Body request: CreateAuctionRequestDto
-    ): Response<ApiResponseDto<CreateAuctionResponseDto>> // Agregado wrapper
+    ): Response<ApiResponseDto<CreateAuctionResponseDto>>
 
     @Multipart
     @POST("api/v1/auctions/{id}/image")
@@ -19,9 +19,11 @@ interface AdminApi {
         @Part file: MultipartBody.Part
     ): Response<ApiResponseDto<CreateAuctionResponseDto>>
 
-    @GET("api/v1/auctions/active") // Verifica que esta ruta sea la correcta en tu API
-    suspend fun getInventory(): Response<ApiResponseDto<List<InventoryItemDto>>> // Agregado wrapper
+    // Ruta corregida según tu AuctionController.java
+    @GET("api/v1/auctions/my-auctions")
+    suspend fun getInventory(): Response<ApiResponseDto<List<InventoryItemDto>>>
 
-    @GET("api/v1/admin/stats") // Verifica que esta ruta sea la correcta en tu API
-    suspend fun getStats(): Response<ApiResponseDto<AdminStatsDto>> // Agregado wrapper
+    // Ruta corregida (usando /active porque no tienes un /stats en el backend aún)
+    @GET("api/v1/auctions/active")
+    suspend fun getStats(): Response<ApiResponseDto<AdminStatsDto>>
 }
