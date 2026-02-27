@@ -83,7 +83,7 @@ fun DashboardScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "CR",
+                        text = uiState.userName.take(2).uppercase(),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Gold

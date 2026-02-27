@@ -2,7 +2,9 @@ package com.jaffetvr.syncbid.features.users.presentation.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jaffetvr.syncbid.core.di.TokenManager
 import com.jaffetvr.syncbid.features.users.domain.entities.Auction
+import com.jaffetvr.syncbid.features.users.domain.entities.AuctionStatus
 import com.jaffetvr.syncbid.features.users.domain.useCases.GetAuctionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,7 +23,7 @@ data class DashboardUiState(
     val selectedCategory: String = "Todas",
     val categories: List<String> = listOf("Todas", "Electrónica", "Arte", "Autos"),
     val liveCount: Int = 0,
-    val userName: String = "Carlos R."
+    val userName: String = "Usuario"
 )
 
 sealed interface DashboardUiEvent {
@@ -31,10 +33,15 @@ sealed interface DashboardUiEvent {
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val getAuctionsUseCase: GetAuctionsUseCase
+    private val getAuctionsUseCase: GetAuctionsUseCase,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DashboardUiState())
+    private val _uiState = MutableStateFlow(
+        DashboardUiState(
+            userName = tokenManager.getUsername() ?: "Usuario"
+        )
+    )
     val uiState = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<DashboardUiEvent>()
@@ -53,9 +60,7 @@ class DashboardViewModel @Inject constructor(
                     state.copy(
                         auctions = auctions,
                         filteredAuctions = filtered,
-                        liveCount = auctions.count {
-                            it.status == com.jaffetvr.syncbid.features.users.domain.entities.AuctionStatus.LIVE
-                        }
+                        liveCount = auctions.count { it.status == AuctionStatus.LIVE }
                     )
                 }
             }
