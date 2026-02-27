@@ -30,7 +30,8 @@ data class InventoryItemDto(
     @SerializedName("currentPrice") val currentPrice: Double?,
     @SerializedName("endTime") val endTime: String?,
     @SerializedName("status") val status: String,
-    @SerializedName("winnerUsername") val winnerUsername: String?
+    @SerializedName("winnerUsername") val winnerUsername: String?,
+    @SerializedName("bidCount") val bidCount: Int?
 )
 
 data class AdminStatsDto(
