@@ -19,7 +19,7 @@ data class CreateAuctionUiState(
     val name: String = "",
     val description: String = "",
     val basePrice: String = "",
-    val durationHours: Int = 24,
+    val durationMinutes: Int = 5,
     val isLoading: Boolean = false,
     val isNameValid: Boolean = true,
     val isDescValid: Boolean = true,
@@ -43,7 +43,7 @@ class CreateAuctionViewModel @Inject constructor(
     private val _events = MutableSharedFlow<CreateAuctionEvent>()
     val events: SharedFlow<CreateAuctionEvent> = _events.asSharedFlow()
 
-    val durationOptions = listOf(1, 6, 12, 24, 48, 72)
+    val durationOptions = listOf(5, 10, 15, 30, 60)
 
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value, isNameValid = true) }
@@ -57,8 +57,8 @@ class CreateAuctionViewModel @Inject constructor(
         _uiState.update { it.copy(basePrice = value, isPriceValid = true) }
     }
 
-    fun onDurationChange(hours: Int) {
-        _uiState.update { it.copy(durationHours = hours) }
+    fun onDurationChange(minutes: Int) {
+        _uiState.update { it.copy(durationMinutes = minutes) }
     }
 
     fun onImageChange(uri: Uri) {
@@ -85,12 +85,11 @@ class CreateAuctionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // CORRECCIÓN: Se eliminó el parámetro 'category' que ya no existe en el UseCase
             createAuctionUseCase(
                 name = state.name,
                 description = state.description,
                 basePrice = state.basePrice.toDouble(),
-                durationHours = state.durationHours,
+                durationMinutes = state.durationMinutes,
                 imageUri = state.imageUri
             ).fold(
                 onSuccess = {

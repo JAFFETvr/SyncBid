@@ -227,9 +227,9 @@ fun ExploreScreen(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    listOf(1, 3, 8, 24).forEach { hours ->
-                        val selected = uiState.durationHours == hours
-                        val label = "${hours}h"
+                    listOf(5, 10, 15, 30, 60).forEach { minutes ->
+                        val selected = uiState.durationMinutes == minutes
+                        val label = if (minutes < 60) "${minutes}m" else "${minutes / 60}h"
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -240,7 +240,7 @@ fun ExploreScreen(
                                     if (selected) Gold else GoldBorder,
                                     RoundedCornerShape(10.dp)
                                 )
-                                .clickable { viewModel.onDurationChange(hours) }
+                                .clickable { viewModel.onDurationChange(minutes) }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {

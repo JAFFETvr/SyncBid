@@ -11,8 +11,8 @@ interface AdminRepository {
         name: String,
         description: String,
         basePrice: Double,
-        durationHours: Int,
-        imageUri: Uri? // Se eliminó 'category' y se agregó la imagen
+        durationMinutes: Int,
+        imageUri: Uri?
     ): Result<CreatedAuction>
 
     suspend fun getInventory(): Result<List<InventoryItem>>
