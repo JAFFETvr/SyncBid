@@ -31,11 +31,10 @@ class AdminRepositoryImpl @Inject constructor(
         name: String,
         description: String,
         basePrice: Double,
-        durationHours: Int,
-        imageUri: Uri? // Se eliminó 'category'
+        durationMinutes: Int,
+        imageUri: Uri?
     ): Result<CreatedAuction> = try {
-        // 1. Calculamos endTime basándonos en la duración seleccionada
-        val endTimeIso = LocalDateTime.now().plusHours(durationHours.toLong()).toString()
+        val endTimeIso = LocalDateTime.now().plusMinutes(durationMinutes.toLong()).toString()
 
         // 2. DTO con los 4 campos exactos de tu AuctionCreateRequest.java
         val requestDto = CreateAuctionRequestDto(

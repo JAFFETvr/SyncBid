@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.jaffetvr.syncbid.features.admin.presentation.screens.AdminConfigScreen
 import com.jaffetvr.syncbid.features.admin.presentation.screens.AdminDashboardScreen
 import com.jaffetvr.syncbid.features.admin.presentation.screens.CreateAuctionScreen
 import com.jaffetvr.syncbid.features.admin.presentation.screens.InventoryScreen
@@ -116,34 +117,68 @@ fun AppNavigation() {
                         popUpTo("dashboard") { inclusive = false }
                         launchSingleTop = true
                     }
-                }
+                },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                viewModel = hiltViewModel()
             )
         }
 
         // ─── Admin ───────────────────────────────────────────────
         composable("admin_dashboard") {
             AdminDashboardScreen(
-                onNavigateToCreateAuction = {
-                    navController.navigate("create_auction")
-                },
-                onNavigateToInventory = {
-                    navController.navigate("admin_inventory")
+                onNavigateToRoute = { route ->
+                    if (route != "admin_dashboard") {
+                        navController.navigate(route) {
+                            popUpTo("admin_dashboard") { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
                 },
                 viewModel = hiltViewModel()
             )
         }
 
-        composable("create_auction") {
+        composable("admin_create") {
             CreateAuctionScreen(
-                onBack = { navController.popBackStack() },
-                onSuccess = { navController.popBackStack() },
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("admin_dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 viewModel = hiltViewModel()
             )
         }
 
         composable("admin_inventory") {
             InventoryScreen(
-                onBack = { navController.popBackStack() },
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("admin_dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                viewModel = hiltViewModel()
+            )
+        }
+
+        composable("admin_config") {
+            AdminConfigScreen(
+                onNavigateToRoute = { route ->
+                    navController.navigate(route) {
+                        popUpTo("admin_dashboard") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 viewModel = hiltViewModel()
             )
         }

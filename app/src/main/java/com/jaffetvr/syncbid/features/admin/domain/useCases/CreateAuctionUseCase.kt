@@ -12,14 +12,14 @@ class CreateAuctionUseCase @Inject constructor(
         name: String,
         description: String,
         basePrice: Double,
-        durationHours: Int,
-        imageUri: Uri? // Parámetros sincronizados con el repositorio
+        durationMinutes: Int,
+        imageUri: Uri?
     ): Result<CreatedAuction> =
         repository.createAuction(
             name = name,
             description = description,
             basePrice = basePrice,
-            durationHours = durationHours,
+            durationMinutes = durationMinutes,
             imageUri = imageUri
         )
 }

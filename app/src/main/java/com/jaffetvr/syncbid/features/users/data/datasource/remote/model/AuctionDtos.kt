@@ -75,3 +75,10 @@ data class BidUpdateData(
     @SerializedName("bidderUsername") val bidderUsername: String?,
     @SerializedName("createdAt") val createdAt: String?
 )
+
+data class UserProfileDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("createdAt") val createdAt: String?
+)

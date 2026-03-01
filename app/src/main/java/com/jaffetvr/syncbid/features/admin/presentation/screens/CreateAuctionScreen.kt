@@ -12,27 +12,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaffetvr.syncbid.core.ui.theme.*
+import com.jaffetvr.syncbid.features.admin.presentation.components.AdminBottomNav
 import com.jaffetvr.syncbid.features.admin.presentation.viewModels.CreateAuctionEvent
 import com.jaffetvr.syncbid.features.admin.presentation.viewModels.CreateAuctionViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateAuctionScreen(
-    onBack: () -> Unit,
-    onSuccess: () -> Unit,
+    onNavigateToRoute: (String) -> Unit,
     viewModel: CreateAuctionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,7 +46,10 @@ fun CreateAuctionScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is CreateAuctionEvent.Success -> onSuccess()
+                is CreateAuctionEvent.Success -> {
+                    snackbarHostState.showSnackbar("Subasta creada exitosamente")
+                    onNavigateToRoute("admin_inventory")
+                }
                 is CreateAuctionEvent.Error -> snackbarHostState.showSnackbar(event.message)
             }
         }
@@ -65,17 +67,12 @@ fun CreateAuctionScreen(
     )
 
     Scaffold(
-        containerColor = Black,
+        containerColor = Black2,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Nueva Subasta", color = White90, fontSize = 17.sp) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Gold)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Black2)
+        bottomBar = {
+            AdminBottomNav(
+                currentRoute = "admin_create",
+                onItemClick = onNavigateToRoute
             )
         }
     ) { padding ->
@@ -84,14 +81,21 @@ fun CreateAuctionScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Text(
+                text = "Nueva Subasta",
+                style = MaterialTheme.typography.headlineMedium,
+                color = White,
+                fontWeight = FontWeight.Bold
+            )
+
             // Imagen
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(180.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Black3)
                     .border(1.dp, if (uiState.imageUri != null) Gold else GoldBorder, RoundedCornerShape(12.dp))
@@ -149,20 +153,26 @@ fun CreateAuctionScreen(
             )
 
             // Duración (Chips)
-            Text("Duración de la subasta", color = White70, fontSize = 13.sp)
+            Text(
+                text = "DURACIÓN",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = White30,
+                letterSpacing = 1.sp
+            )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                viewModel.durationOptions.forEach { hours ->
-                    val selected = uiState.durationHours == hours
-                    val label = if (hours < 24) "${hours}h" else "${hours / 24}d"
+                viewModel.durationOptions.forEach { minutes ->
+                    val selected = uiState.durationMinutes == minutes
+                    val label = if (minutes < 60) "${minutes}m" else "${minutes / 60}h"
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(if (selected) GoldSubtle else Black3)
                             .border(1.dp, if (selected) Gold else GoldBorder, RoundedCornerShape(20.dp))
-                            .clickable { viewModel.onDurationChange(hours) }
+                            .clickable { viewModel.onDurationChange(minutes) }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(label, color = if (selected) Gold else White70, fontSize = 12.sp)
@@ -170,7 +180,7 @@ fun CreateAuctionScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = viewModel::submit,
@@ -182,7 +192,7 @@ fun CreateAuctionScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Black, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Publicar Subasta", fontSize = 15.sp)
+                    Text("Publicar Subasta", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

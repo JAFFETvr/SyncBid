@@ -23,9 +23,8 @@ class AuthRepositoryImpl @Inject constructor(
                     ?: return Result.failure(Exception("Token no recibido"))
 
                 tokenManager.saveToken(token)
+                tokenManager.saveEmail(email)
 
-                // El login solo devuelve el token, así que usamos la parte antes del @
-                // como username temporal. Si ya había uno guardado (del registro), se respeta.
                 val username = email.substringBefore("@")
                 if (tokenManager.getUsername() == null) {
                     tokenManager.saveUsername(username)
@@ -69,8 +68,10 @@ class AuthRepositoryImpl @Inject constructor(
                 val userDto = response.body()!!.data
                     ?: return Result.failure(Exception("Datos de usuario no recibidos"))
 
-                // Guardamos el username real que devuelve el servidor ANTES del auto-login
                 tokenManager.saveUsername(userDto.username)
+                tokenManager.saveEmail(email)
+                tokenManager.saveUserId(userDto.id)
+                userDto.createdAt?.let { tokenManager.saveCreatedAt(it) }
 
                 val loginResult = login(email, password)
                 if (loginResult.isSuccess) {
